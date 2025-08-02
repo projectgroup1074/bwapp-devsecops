@@ -2,34 +2,36 @@ pipeline {
     agent any
 
     environment {
-        SONARQUBE_URL = 'http://sonarqube:9000'
+        SONARQUBE_ENV = credentials('sonarqube-token') // Jenkins credentials ID for SonarQube
     }
 
     stages {
+
         stage('Checkout Code') {
             steps {
                 git branch: 'main', url: 'https://github.com/projectgroup1074/bwapp-devsecops.git'
             }
         }
 
-        stage('Build Docker Containers') {
-    steps {
-        dir('bwapp-devsecops') { // change to the folder containing docker-compose.yml
-            sh 'docker-compose up -d'
-        }
-    }
-}
-
-        stage('Run SonarQube Analysis') {
+        stage('Build & Run Containers') {
             steps {
-                withSonarQubeEnv('MySonarQube') {
-                    sh '''
+                dir('.') { // Run docker-compose from repo root
+                    sh 'docker-compose down || true'
+                    sh 'docker-compose up -d'
+                }
+            }
+        }
+
+        stage('SonarQube Analysis') {
+            steps {
+                withSonarQubeEnv('sonarqube') {
+                    sh """
                         sonar-scanner \
-                            -Dsonar.projectKey=bwapp \
-                            -Dsonar.sources=. \
-                            -Dsonar.host.url=$SONARQUBE_URL \
-                            -Dsonar.login=your_sonarqube_token
-                    '''
+                        -Dsonar.projectKey=bwapp \
+                        -Dsonar.sources=. \
+                        -Dsonar.host.url=http://sonarqube:9000 \
+                        -Dsonar.login=${SONARQUBE_ENV}
+                    """
                 }
             }
         }
@@ -42,9 +44,9 @@ pipeline {
             }
         }
 
-        stage('Security Scan Placeholder') {
+        stage('Security Scan (DefectDojo Placeholder)') {
             steps {
-                echo "Future: Trigger security scan and push to DefectDojo"
+                echo 'Here we would run DefectDojo API scans...'
             }
         }
     }
