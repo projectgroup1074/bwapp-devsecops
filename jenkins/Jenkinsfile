@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        SONARQUBE_ENV = credentials('sonarqube-token') // Jenkins credentials ID for SonarQube
+        SONARQUBE_ENV = credentials('sonar-token') // Jenkins credentials ID for SonarQube
     }
 
     stages {
