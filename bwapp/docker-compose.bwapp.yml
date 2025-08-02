@@ -4,7 +4,6 @@ services:
   mysql:
     image: mysql:5.7
     container_name: bwapp_mysql
-    restart: always
     environment:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: bWAPP
@@ -14,7 +13,6 @@ services:
   bwapp:
     image: raesene/bwapp
     container_name: bwapp
-    restart: always
     ports:
       - "9090:80"
     depends_on:
