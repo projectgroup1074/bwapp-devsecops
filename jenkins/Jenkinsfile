@@ -8,7 +8,7 @@ pipeline {
     stages {
         stage('Checkout Code') {
             steps {
-                git 'https://github.com/projectgroup1074/bwapp-devsecops.git'
+                git branch: 'main', url: 'https://github.com/projectgroup1074/bwapp-devsecops.git'
             }
         }
 
@@ -24,11 +24,11 @@ pipeline {
             steps {
                 withSonarQubeEnv('MySonarQube') {
                     sh '''
-                    sonar-scanner \
-                        -Dsonar.projectKey=bwapp \
-                        -Dsonar.sources=. \
-                        -Dsonar.host.url=$SONARQUBE_URL \
-                        -Dsonar.login=your_sonarqube_token
+                        sonar-scanner \
+                            -Dsonar.projectKey=bwapp \
+                            -Dsonar.sources=. \
+                            -Dsonar.host.url=$SONARQUBE_URL \
+                            -Dsonar.login=your_sonarqube_token
                     '''
                 }
             }
