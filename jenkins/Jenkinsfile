@@ -13,12 +13,12 @@ pipeline {
         }
 
         stage('Build Docker Containers') {
-            steps {
-                dir('../') {
-                    sh 'docker-compose up -d'
-                }
-            }
+    steps {
+        dir('bwapp-devsecops') { // change to the folder containing docker-compose.yml
+            sh 'docker-compose up -d'
         }
+    }
+}
 
         stage('Run SonarQube Analysis') {
             steps {
