@@ -14,7 +14,7 @@ pipeline {
 
         stage('Build Docker Containers') {
             steps {
-                dir('jenkins') {
+                dir('./') {
                     sh 'docker-compose up -d'
                 }
             }
