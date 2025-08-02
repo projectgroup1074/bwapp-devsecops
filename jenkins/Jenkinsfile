@@ -14,7 +14,7 @@ pipeline {
 
         stage('Build Docker Containers') {
             steps {
-                dir('./') {
+                dir('..') {
                     sh 'docker-compose up -d'
                 }
             }
