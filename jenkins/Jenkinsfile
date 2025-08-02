@@ -2,41 +2,52 @@ pipeline {
     agent any
 
     environment {
-        SONARQUBE_URL = 'http://192.168.28.141:9000'
+        SONARQUBE_ENV = credentials('sonar-token') // Jenkins credentials ID for SonarQube
+        GIT_CRED = 'Githubtoken' // Jenkins credentials ID for GitHub
     }
 
     stages {
+
         stage('Checkout Code') {
             steps {
-                git branch: 'main', url: 'https://github.com/projectgroup1074/bwapp-devsecops.git'
+                git branch: 'main', 
+                    credentialsId: "${GIT_CRED}", 
+                    url: 'https://github.com/projectgroup1074/bwapp-devsecops.git'
             }
         }
 
         stage('Build & Run Containers') {
-    steps {
-        dir('bwapp') {
-            sh 'docker-compose -f docker-compose.bwapp.yml down || true'
-            sh 'docker-compose -f docker-compose.bwapp.yml up -d'
+            steps {
+                dir('bwapp') {
+                    sh '''
+                        echo "🧹 Cleaning up old containers and networks..."
+                        docker rm -f bwapp_mysql bwapp_web || true
+                        docker-compose -f docker-compose.bwapp.yml down --remove-orphans || true
+                        
+                        echo "🚀 Starting containers..."
+                        docker-compose -f docker-compose.bwapp.yml up -d --force-recreate
+                    '''
+                }
+            }
         }
-    }
-}
+
         stage('SonarQube Analysis') {
             steps {
-                withSonarQubeEnv('MySonarQube') {
-                    sh '''
-                    sonar-scanner \
-                      -Dsonar.projectKey=bwapp \
-                      -Dsonar.sources=. \
-                      -Dsonar.host.url=$SONARQUBE_URL \
-                      -Dsonar.login=$sonar-token
-                    '''
+                withSonarQubeEnv('sonarqube') {
+                    sh """
+                        sonar-scanner \
+                          -Dsonar.projectKey=bwapp \
+                          -Dsonar.sources=. \
+                          -Dsonar.host.url=http://sonarqube:9000 \
+                          -Dsonar.login=${SONARQUBE_ENV}
+                    """
                 }
             }
         }
 
         stage('Quality Gate') {
             steps {
-                timeout(time: 1, unit: 'MINUTES') {
+                timeout(time: 2, unit: 'MINUTES') {
                     waitForQualityGate abortPipeline: true
                 }
             }
@@ -44,8 +55,18 @@ pipeline {
 
         stage('Security Scan (DefectDojo Placeholder)') {
             steps {
-                echo "Future step: Trigger OWASP ZAP, save results, and push to DefectDojo"
+                echo '🔍 Here we would run DefectDojo API scans...'
             }
+        }
+    }
+
+    post {
+        always {
+            echo "📦 Cleaning up containers after build..."
+            sh '''
+                docker rm -f bwapp_mysql bwapp_web || true
+                docker-compose -f docker-compose.bwapp.yml down --remove-orphans || true
+            '''
         }
     }
 }
