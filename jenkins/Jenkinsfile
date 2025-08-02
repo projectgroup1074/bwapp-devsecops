@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        SONARQUBE_URL = 'http://sonarqube:9000'
+        SONARQUBE_URL = 'http://192.168.28.141:9000'
     }
 
     stages {
@@ -32,7 +32,7 @@ pipeline {
                       -Dsonar.projectKey=bwapp \
                       -Dsonar.sources=. \
                       -Dsonar.host.url=$SONARQUBE_URL \
-                      -Dsonar.login=your_sonarqube_token
+                      -Dsonar.login=$sonar-token
                     '''
                 }
             }
