@@ -2,30 +2,33 @@ pipeline {
     agent any
 
     environment {
-        SONARQUBE_ENV = credentials('sonar-token') // Jenkins credentials ID for SonarQube
-        GIT_CRED = 'Githubtoken' // Jenkins credentials ID for GitHub
+        SONARQUBE_ENV = credentials('sonarqube-token') // Replace with your SonarQube token ID
+        GITHUB_CRED = credentials('Githubtoken')      // Your GitHub credentials ID
     }
 
     stages {
 
         stage('Checkout Code') {
             steps {
-                git branch: 'main', 
-                    credentialsId: "${GIT_CRED}", 
+                git branch: 'main',
+                    credentialsId: "${GITHUB_CRED}",
                     url: 'https://github.com/projectgroup1074/bwapp-devsecops.git'
             }
         }
 
         stage('Build & Run Containers') {
             steps {
-                dir('bwapp') {
+                script {
+                    echo "🧹 Cleaning old containers..."
                     sh '''
-                        echo "🧹 Cleaning up old containers and networks..."
                         docker rm -f bwapp_mysql bwapp_web || true
-                        docker-compose -f docker-compose.bwapp.yml down --remove-orphans || true
-                        
-                        echo "🚀 Starting containers..."
-                        docker-compose -f docker-compose.bwapp.yml up -d --force-recreate
+                        docker network rm bwapp_bwapp_net || true
+                        docker-compose -f bwapp/docker-compose.bwapp.yml down --remove-orphans || true
+                    '''
+
+                    echo "🚀 Starting containers..."
+                    sh '''
+                        docker-compose -f bwapp/docker-compose.bwapp.yml up -d --force-recreate
                     '''
                 }
             }
@@ -33,21 +36,23 @@ pipeline {
 
         stage('SonarQube Analysis') {
             steps {
-                withSonarQubeEnv('sonarqube') {
-                    sh """
+                withSonarQubeEnv('MySonarQubeServer') { // Jenkins SonarQube server name
+                    sh '''
+                        echo "🔍 Running SonarQube analysis..."
+                        # Example - replace with your sonar-scanner command
                         sonar-scanner \
-                          -Dsonar.projectKey=bwapp \
-                          -Dsonar.sources=. \
-                          -Dsonar.host.url=http://sonarqube:9000 \
-                          -Dsonar.login=${SONARQUBE_ENV}
-                    """
+                            -Dsonar.projectKey=bwapp-devsecops \
+                            -Dsonar.sources=. \
+                            -Dsonar.host.url=$SONAR_HOST_URL \
+                            -Dsonar.login=$SONARQUBE_ENV
+                    '''
                 }
             }
         }
 
         stage('Quality Gate') {
             steps {
-                timeout(time: 2, unit: 'MINUTES') {
+                timeout(time: 1, unit: 'MINUTES') {
                     waitForQualityGate abortPipeline: true
                 }
             }
@@ -55,7 +60,10 @@ pipeline {
 
         stage('Security Scan (DefectDojo Placeholder)') {
             steps {
-                echo '🔍 Here we would run DefectDojo API scans...'
+                sh '''
+                    echo "🔒 Running DefectDojo security scan placeholder..."
+                    # Add DefectDojo API scan commands here later
+                '''
             }
         }
     }
@@ -65,7 +73,7 @@ pipeline {
             echo "📦 Cleaning up containers after build..."
             sh '''
                 docker rm -f bwapp_mysql bwapp_web || true
-                docker-compose -f docker-compose.bwapp.yml down --remove-orphans || true
+                docker-compose -f bwapp/docker-compose.bwapp.yml down --remove-orphans || true
             '''
         }
     }
