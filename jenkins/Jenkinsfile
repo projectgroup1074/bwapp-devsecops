@@ -2,11 +2,10 @@ pipeline {
     agent any
 
     environment {
-        SONARQUBE_ENV = credentials('sonar-token') // Jenkins credentials ID for SonarQube
+        SONARQUBE_URL = 'http://sonarqube:9000'
     }
 
     stages {
-
         stage('Checkout Code') {
             steps {
                 git branch: 'main', url: 'https://github.com/projectgroup1074/bwapp-devsecops.git'
@@ -15,22 +14,26 @@ pipeline {
 
         stage('Build & Run Containers') {
             steps {
-                dir('.') { // Run docker-compose from repo root
-                    sh 'docker-compose up -d'
+                dir('bwapp') {
+                    // Stop if already running
+                    sh 'docker compose -f docker-compose.bwapp.yml down || true'
+
+                    // Start fresh containers
+                    sh 'docker compose -f docker-compose.bwapp.yml up -d'
                 }
             }
         }
 
         stage('SonarQube Analysis') {
             steps {
-                withSonarQubeEnv('sonarqube') {
-                    sh """
-                        sonar-scanner \
-                        -Dsonar.projectKey=bwapp \
-                        -Dsonar.sources=. \
-                        -Dsonar.host.url=http://localhost:9000 \
-                        -Dsonar.login=${SONARQUBE_ENV}
-                    """
+                withSonarQubeEnv('MySonarQube') {
+                    sh '''
+                    sonar-scanner \
+                      -Dsonar.projectKey=bwapp \
+                      -Dsonar.sources=. \
+                      -Dsonar.host.url=$SONARQUBE_URL \
+                      -Dsonar.login=your_sonarqube_token
+                    '''
                 }
             }
         }
@@ -45,7 +48,7 @@ pipeline {
 
         stage('Security Scan (DefectDojo Placeholder)') {
             steps {
-                echo 'Here we would run DefectDojo API scans...'
+                echo "Future step: Trigger OWASP ZAP, save results, and push to DefectDojo"
             }
         }
     }
