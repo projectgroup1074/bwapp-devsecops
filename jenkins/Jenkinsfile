@@ -17,7 +17,6 @@ pipeline {
             steps {
                 dir('.') { // Run docker-compose from repo root
                     sh 'docker-compose up -d'
-                   
                 }
             }
         }
@@ -29,7 +28,7 @@ pipeline {
                         sonar-scanner \
                         -Dsonar.projectKey=bwapp \
                         -Dsonar.sources=. \
-                        -Dsonar.host.url=http://sonarqube:9000 \
+                        -Dsonar.host.url=http://localhost:9000 \
                         -Dsonar.login=${SONARQUBE_ENV}
                     """
                 }
