@@ -1,0 +1,15 @@
+services:
+  defectdojo:
+    image: defectdojo/defectdojo-django
+    container_name: defectdojo
+    ports:
+      - "8081:8080"
+    environment:
+      DD_ADMIN_USER: admin
+      DD_ADMIN_PASSWORD: admin123
+    networks:
+      - devsecops_net
+
+networks:
+  devsecops_net:
+    driver: bridge

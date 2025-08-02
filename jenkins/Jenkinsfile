@@ -1,0 +1,51 @@
+pipeline {
+    agent any
+
+    environment {
+        SONARQUBE_URL = 'http://sonarqube:9000'
+    }
+
+    stages {
+        stage('Checkout Code') {
+            steps {
+                git 'https://github.com/your-username/bwapp-devsecops.git'
+            }
+        }
+
+        stage('Build Docker Containers') {
+            steps {
+                dir('./') {
+                    sh 'docker compose up -d'
+                }
+            }
+        }
+
+        stage('Run SonarQube Analysis') {
+            steps {
+                withSonarQubeEnv('MySonarQube') {
+                    sh '''
+                    sonar-scanner \
+                        -Dsonar.projectKey=bwapp \
+                        -Dsonar.sources=. \
+                        -Dsonar.host.url=$SONARQUBE_URL \
+                        -Dsonar.login=your_sonarqube_token
+                    '''
+                }
+            }
+        }
+
+        stage('Quality Gate') {
+            steps {
+                timeout(time: 1, unit: 'MINUTES') {
+                    waitForQualityGate abortPipeline: true
+                }
+            }
+        }
+
+        stage('Security Scan Placeholder') {
+            steps {
+                echo "Future: Trigger security scan and push to DefectDojo"
+            }
+        }
+    }
+}

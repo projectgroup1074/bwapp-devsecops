@@ -1,0 +1,15 @@
+services:
+  sonarqube:
+    image: sonarqube:community
+    container_name: sonarqube
+    ports:
+      - "9000:9000"
+    environment:
+      SONARQUBE_JDBC_USERNAME: admin
+      SONARQUBE_JDBC_PASSWORD: admin
+    networks:
+      - devsecops_net
+
+networks:
+  devsecops_net:
+    driver: bridge

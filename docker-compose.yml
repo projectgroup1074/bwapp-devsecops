@@ -1,0 +1,38 @@
+services:
+  bwapp:
+    extends:
+      file: ./bwapp/docker-compose.bwapp.yml
+      service: bwapp
+
+  mysql:
+    extends:
+      file: ./bwapp/docker-compose.bwapp.yml
+      service: mysql
+
+  jenkins:
+    build: ./jenkins
+    container_name: jenkins
+    ports:
+      - "8080:8080"
+    volumes:
+      - jenkins_home:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - devsecops_net
+
+  sonarqube:
+    extends:
+      file: ./sonarqube/docker-compose.sonar.yml
+      service: sonarqube
+
+  defectdojo:
+    extends:
+      file: ./defectdojo/docker-compose.dojo.yml
+      service: defectdojo
+
+volumes:
+  jenkins_home:
+
+networks:
+  devsecops_net:
+    driver: bridge
